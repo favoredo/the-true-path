@@ -91,4 +91,4 @@ design: "../design/001-initial-playable-game.md"
 
 ## Контекст для продолжения
 
-Текущая фаза — проверка и публикация по утверждённому дизайну `docs/design/001-initial-playable-game.md`. Реализация завершена, headless test дал 63 успешных assertions, HTML5 release собран, Playwright дал 6/6 успешных сценариев. Следующее действие: коммит и push в `main`, проверка GitHub Actions и публичного Pages URL; после этого остаётся ручное слуховое подтверждение двух эффектов и завершение статусов.
+Текущая фаза — проверка и публикация по утверждённому дизайну `docs/design/001-initial-playable-game.md`. Коммит `3dac6eb` отправлен в `main`. Локально headless дал 63 assertions, Playwright — 6/6 сценариев. Первый Linux verify упал из-за отсутствия `libopenal.so.1`; в workflow добавлена установка `libopenal1`. Следующее действие: отправить исправление и проверить новый Actions run и Pages URL. Слуховое подтверждение эффектов и завершение статусов остаются открытыми.

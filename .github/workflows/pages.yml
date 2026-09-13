@@ -27,6 +27,10 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npx playwright install --with-deps chromium
+      - name: Install Defold headless runtime dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes --no-install-recommends libopenal1
       - run: ./scripts/test_headless.sh
       - run: ./scripts/build_html5.sh
       - run: npx playwright test
