@@ -1,0 +1,4 @@
+interface:
+  display_name: "Defold HTML5 Pages"
+  short_description: "Build and publish Defold games to Pages"
+  default_prompt: "Use $defold-html5-pages to prepare and verify the approved HTML5 release."

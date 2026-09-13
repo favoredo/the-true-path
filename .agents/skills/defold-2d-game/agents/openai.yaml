@@ -1,0 +1,4 @@
+interface:
+  display_name: "Defold 2D Game"
+  short_description: "Build and verify 2D gameplay in Defold"
+  default_prompt: "Use $defold-2d-game to implement this approved 2D gameplay design in Defold."

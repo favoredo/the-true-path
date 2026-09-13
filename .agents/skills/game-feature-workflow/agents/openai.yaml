@@ -1,0 +1,4 @@
+interface:
+  display_name: "Game Feature Workflow"
+  short_description: "Plan, design, implement, and verify game work"
+  default_prompt: "Use $game-feature-workflow to prepare the next approved game feature phase."
