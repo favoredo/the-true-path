@@ -1,0 +1,8 @@
+tile_set: "/assets/graphics/game.tilesource"
+layers {
+  id: "maze"
+  z: 0.0
+  is_visible: 1
+  cell { x: 0 y: 0 tile: 1 }
+  cell { x: 16 y: 8 tile: 1 }
+}

@@ -1,0 +1,80 @@
+local maze = require "game.maze"
+local game_state = require "game.game_state"
+
+local assertions = 0
+
+local function equal(actual, expected, message)
+  assertions = assertions + 1
+  assert(actual == expected, string.format("%s: expected %s, got %s", message, tostring(expected), tostring(actual)))
+end
+
+local function truthy(value, message)
+  assertions = assertions + 1
+  assert(value, message)
+end
+
+local function follow(state, sequence)
+  local names = { U = "up", D = "down", L = "left", R = "right" }
+  local result
+  for step = 1, #sequence do
+    result = game_state.move(state, names[sequence:sub(step, step)])
+    truthy(result.kind == "moved" or result.kind == "won", "solution step " .. step .. " must be accepted")
+  end
+  return result
+end
+
+local function run_suite()
+  local report = maze.validate()
+  equal(report.width, 17, "maze width")
+  equal(report.height, 9, "maze height")
+  equal(report.shortest_path, 36, "shortest path")
+  truthy(report.shortest_path >= 24, "shortest path must be meaningful")
+  truthy(report.dead_ends >= 3, "maze must have at least three dead ends")
+
+  local state = game_state.new(maze)
+  local initial = game_state.snapshot(state)
+  equal(initial.row, 2, "start row")
+  equal(initial.col, 2, "start column")
+  equal(initial.status, "playing", "initial status")
+
+  local blocked = game_state.move(state, "up")
+  equal(blocked.kind, "blocked", "wall result")
+  equal(blocked.state.row, 2, "blocked row")
+  equal(blocked.state.col, 2, "blocked column")
+  equal(blocked.state.blocked_count, 1, "blocked counter")
+
+  local moved = game_state.move(state, "right")
+  equal(moved.kind, "moved", "valid move result")
+  equal(moved.state.row, 2, "valid move row")
+  equal(moved.state.col, 3, "valid move column")
+
+  game_state.reset(state)
+  local won = follow(state, "RRRRDDDDRRDDRRRRUUUURRUURRDDDDLLDDRR")
+  equal(won.kind, "won", "solution result")
+  equal(won.state.status, "won", "won status")
+  equal(won.state.win_count, 1, "single win event")
+  equal(won.state.accepted_count, 36, "solution length")
+
+  local ignored = game_state.move(state, "left")
+  equal(ignored.kind, "ignored", "movement after victory")
+  equal(ignored.state.win_count, 1, "win event remains single")
+
+  local reset = game_state.reset(state)
+  equal(reset.status, "playing", "reset status")
+  equal(reset.row, initial.row, "reset row")
+  equal(reset.col, initial.col, "reset column")
+  equal(reset.accepted_count, 0, "reset accepted counter")
+  equal(reset.blocked_count, 0, "reset blocked counter")
+  equal(reset.win_count, 0, "reset win counter")
+end
+
+function init(self)
+  local ok, error_message = pcall(run_suite)
+  if ok then
+    print(string.format('TEST {"event":"suite_end","status":"pass","assertions":%d}', assertions))
+    sys.exit(0)
+  else
+    print(string.format('TEST {"event":"suite_end","status":"fail","assertions":%d,"message":"%s"}', assertions, tostring(error_message):gsub('"', "'")))
+    sys.exit(1)
+  end
+end

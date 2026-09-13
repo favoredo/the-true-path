@@ -1,0 +1,17 @@
+local function set_victory(visible)
+  gui.set_enabled(gui.get_node("victory_panel"), visible)
+  gui.set_enabled(gui.get_node("victory_title"), visible)
+  gui.set_enabled(gui.get_node("victory_hint"), visible)
+end
+
+function init(self)
+  set_victory(false)
+end
+
+function on_message(self, message_id)
+  if message_id == hash("show_playing") then
+    set_victory(false)
+  elseif message_id == hash("show_victory") then
+    set_victory(true)
+  end
+end

@@ -9,7 +9,9 @@ Preserve enough state in repository documents for another Codex session to conti
 
 ## Locate the active work
 
-Inspect `git status`, `docs/plans/*.md`, and `docs/design/*.md`. Match artifacts by slug and continue the current phase when the new request belongs to it. Create a short kebab-case slug only for genuinely new work.
+Inspect `git status`, `docs/plans/*.md`, and `docs/design/*.md`. Document names use `<NNN>-<slug>.md`: a shared three-digit sequence number and slug identify one plan/design pair. Match active artifacts by both fields and continue the current phase when the new request belongs to it.
+
+For genuinely new work, scan both directories, take one more than the highest existing number, zero-pad it to three digits, and create a short kebab-case slug. Start at `001` when no numbered artifact exists. Never fill gaps, reuse a number, or renumber existing artifacts unless the user explicitly requests it.
 
 Use the templates in `assets/plan-template.md` and `assets/design-template.md`. Keep the sections that carry decisions and continuation state; adapt detail to the feature.
 
@@ -17,13 +19,13 @@ Use the templates in `assets/plan-template.md` and `assets/design-template.md`. 
 
 ### Plan phase
 
-Create `docs/plans/<slug>.md` with status `draft`. Capture the requested outcome, current repository state, scope, assumptions, ordered actions, affected areas, verification outline, risks, open decisions, and continuation context.
+Create `docs/plans/<NNN>-<slug>.md` with `number: "NNN"` and status `draft`. Capture the requested outcome, current repository state, scope, assumptions, ordered actions, affected areas, verification outline, risks, open decisions, and continuation context.
 
 Make the plan concrete enough to estimate and review, but do not settle implementation details that need design analysis. Present the file and pause for explicit plan approval. If corrections arrive, edit the same plan, record the change, keep it `draft`, and present it again.
 
 ### Design phase
 
-After explicit plan approval, record the approval and change the plan to `approved`. Create `docs/design/<slug>.md` with status `draft` and link both files.
+After explicit plan approval, record the approval and change the plan to `approved`. Create `docs/design/<NNN>-<slug>.md` with the same `number` and `slug`, status `draft`, and reciprocal links between both files.
 
 Specify player-facing behavior, game rules and states, level/content representation, Defold resources and message flow, input, camera and presentation behavior, edge cases, HTML5 constraints, acceptance criteria, and exact verification scenarios. Every acceptance criterion needs a corresponding check with observable evidence.
 

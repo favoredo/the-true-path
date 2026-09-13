@@ -1,0 +1,29 @@
+name: "main"
+instances {
+  id: "game"
+  prototype: "/main/game.go"
+  position { x: 48.0 y: 16.0 z: -1.0 }
+  rotation { w: 1.0 }
+  scale3 { x: 1.0 y: 1.0 z: 1.0 }
+}
+instances {
+  id: "player"
+  prototype: "/main/player.go"
+  position { x: 96.0 y: 256.0 z: 0.5 }
+  rotation { w: 1.0 }
+  scale3 { x: 1.0 y: 1.0 z: 1.0 }
+}
+instances {
+  id: "camera"
+  prototype: "/main/camera.go"
+  position { x: 320.0 y: 180.0 z: 1.0 }
+  rotation { w: 1.0 }
+  scale3 { x: 1.0 y: 1.0 z: 1.0 }
+}
+instances {
+  id: "hud"
+  prototype: "/main/hud.go"
+  position { z: 2.0 }
+  rotation { w: 1.0 }
+  scale3 { x: 1.0 y: 1.0 z: 1.0 }
+}

@@ -1,0 +1,67 @@
+script: "/ui/hud.gui_script"
+fonts {
+  name: "debug"
+  font: "/builtins/fonts/debug/always_on_top.font"
+}
+nodes {
+  position { x: 320.0 y: 336.0 }
+  size { x: 640.0 y: 24.0 }
+  type: TYPE_TEXT
+  text: "REACH THE LIGHT"
+  font: "debug"
+  id: "title"
+  color { x: 1.0 y: 0.82 z: 0.4 w: 1.0 }
+  outline { x: 0.04 y: 0.07 z: 0.1 w: 1.0 }
+  shadow { x: 0.0 y: 0.0 z: 0.0 w: 0.6 }
+  pivot: PIVOT_CENTER
+  blend_mode: BLEND_MODE_ALPHA
+  inherit_alpha: true
+}
+nodes {
+  position { x: 320.0 y: 8.0 }
+  size { x: 640.0 y: 16.0 }
+  type: TYPE_TEXT
+  text: "WASD / ARROWS  ·  R RESTART"
+  font: "debug"
+  id: "controls"
+  color { x: 0.92 y: 0.95 z: 0.97 w: 0.82 }
+  pivot: PIVOT_CENTER
+  blend_mode: BLEND_MODE_ALPHA
+  inherit_alpha: true
+}
+nodes {
+  position { x: 320.0 y: 180.0 }
+  size { x: 360.0 y: 116.0 }
+  type: TYPE_BOX
+  id: "victory_panel"
+  color { x: 0.04 y: 0.07 z: 0.1 w: 0.92 }
+  pivot: PIVOT_CENTER
+  blend_mode: BLEND_MODE_ALPHA
+  inherit_alpha: true
+}
+nodes {
+  position { x: 320.0 y: 198.0 }
+  size { x: 360.0 y: 32.0 }
+  type: TYPE_TEXT
+  text: "PATH FOUND"
+  font: "debug"
+  id: "victory_title"
+  color { x: 1.0 y: 0.82 z: 0.4 w: 1.0 }
+  pivot: PIVOT_CENTER
+  blend_mode: BLEND_MODE_ALPHA
+  inherit_alpha: true
+}
+nodes {
+  position { x: 320.0 y: 160.0 }
+  size { x: 360.0 y: 24.0 }
+  type: TYPE_TEXT
+  text: "PRESS R TO WALK AGAIN"
+  font: "debug"
+  id: "victory_hint"
+  color { x: 0.41 y: 0.9 z: 0.87 w: 1.0 }
+  pivot: PIVOT_CENTER
+  blend_mode: BLEND_MODE_ALPHA
+  inherit_alpha: true
+}
+material: "/builtins/materials/gui.material"
+adjust_reference: ADJUST_REFERENCE_PARENT

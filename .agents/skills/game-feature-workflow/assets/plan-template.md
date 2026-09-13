@@ -1,9 +1,10 @@
 ---
 title: "<Название изменения>"
+number: "<NNN>"
 slug: "<slug>"
 status: draft
 updated: YYYY-MM-DD
-design: "../design/<slug>.md"
+design: "../design/<NNN>-<slug>.md"
 ---
 
 # План: <название>

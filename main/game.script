@@ -1,0 +1,130 @@
+local maze = require "game.maze"
+local game_state = require "game.game_state"
+
+local TILE_SIZE = 32
+local ORIGIN_X = 48
+local ORIGIN_Y = 16
+local MOVE_TIME = 0.12
+local PLAYER_URL = "/player"
+local HUD_URL = "/hud#gui"
+
+local ACTIONS = {
+  [hash("move_up")] = "up",
+  [hash("move_down")] = "down",
+  [hash("move_left")] = "left",
+  [hash("move_right")] = "right",
+}
+
+local function world_position(row, col)
+  return vmath.vector3(
+    ORIGIN_X + (col - 0.5) * TILE_SIZE,
+    ORIGIN_Y + (maze.height() - row + 0.5) * TILE_SIZE,
+    0.5
+  )
+end
+
+local function publish_state(self)
+  if not html5 then return end
+  local state = game_state.snapshot(self.model)
+  local script = string.format(
+    "window.__THE_TRUE_PATH_STATE__=Object.freeze({status:'%s',row:%d,col:%d,blocked_count:%d,win_count:%d});",
+    state.status, state.row, state.col, state.blocked_count, state.win_count
+  )
+  html5.run(script)
+end
+
+local function fill_tilemaps()
+  tilemap.set_tile("#exit", "exit", 1, 1, 0)
+  tilemap.set_tile("#exit", "exit", maze.width(), maze.height(), 0)
+  for row = 1, maze.height() do
+    for col = 1, maze.width() do
+      local cell = maze.cell(row, col)
+      local tile_x = col
+      local tile_y = maze.height() - row + 1
+      tilemap.set_tile("#maze", "maze", tile_x, tile_y, cell == "#" and 2 or 1)
+      if cell == "E" then
+        tilemap.set_tile("#exit", "exit", tile_x, tile_y, 3)
+      end
+    end
+  end
+end
+
+local function show_playing(self)
+  msg.post(HUD_URL, "show_playing")
+  publish_state(self)
+end
+
+local function finish_move(self, won)
+  self.moving = false
+  if won then
+    sound.play("#victory")
+    msg.post(HUD_URL, "show_victory")
+  end
+  publish_state(self)
+end
+
+local function attempt_move(self, direction_name)
+  if self.moving then return end
+  local before = game_state.snapshot(self.model)
+  local result = game_state.move(self.model, direction_name)
+  if result.kind == "ignored" then return end
+
+  self.moving = true
+  publish_state(self)
+  if result.kind == "blocked" then
+    local direction = maze.direction(direction_name)
+    local start = world_position(before.row, before.col)
+    local nudge = start + vmath.vector3(direction.col * 2, -direction.row * 2, 0)
+    sound.play("#blocked")
+    go.animate(PLAYER_URL, "position", go.PLAYBACK_ONCE_FORWARD, nudge, go.EASING_OUTSINE, 0.04, 0, function()
+      go.animate(PLAYER_URL, "position", go.PLAYBACK_ONCE_FORWARD, start, go.EASING_INSINE, 0.06, 0, function()
+        finish_move(self, false)
+      end)
+    end)
+    return
+  end
+
+  go.animate(PLAYER_URL, "position", go.PLAYBACK_ONCE_FORWARD,
+    world_position(result.state.row, result.state.col), go.EASING_OUTSINE, MOVE_TIME, 0,
+    function() finish_move(self, result.kind == "won") end)
+end
+
+local function restart(self)
+  go.cancel_animations(PLAYER_URL)
+  self.moving = false
+  game_state.reset(self.model)
+  local start = game_state.snapshot(self.model)
+  go.set_position(world_position(start.row, start.col), PLAYER_URL)
+  show_playing(self)
+end
+
+function init(self)
+  maze.validate()
+  self.model = game_state.new(maze)
+  self.moving = false
+  fill_tilemaps()
+  local start = game_state.snapshot(self.model)
+  go.set_position(world_position(start.row, start.col), PLAYER_URL)
+  go.set("#exit", "tint", vmath.vector4(1, 1, 1, 0.72))
+  go.animate("#exit", "tint.w", go.PLAYBACK_LOOP_PINGPONG, 1.0, go.EASING_INOUTSINE, 0.9)
+  msg.post(".", "acquire_input_focus")
+  show_playing(self)
+end
+
+function on_input(self, action_id, action)
+  if not action.pressed then return false end
+  if action_id == hash("restart") then
+    restart(self)
+    return true
+  end
+  local direction_name = ACTIONS[action_id]
+  if direction_name then
+    attempt_move(self, direction_name)
+    return true
+  end
+  return false
+end
+
+function final(self)
+  msg.post(".", "release_input_focus")
+end
