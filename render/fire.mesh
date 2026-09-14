@@ -1,0 +1,4 @@
+material: "/render/fire.material"
+vertices: "/render/fire.buffer"
+primitive_type: PRIMITIVE_TRIANGLES
+position_stream: "position"

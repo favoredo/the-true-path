@@ -1,0 +1,4 @@
+material: "/test/white.material"
+vertices: "/render/terrain.buffer"
+primitive_type: PRIMITIVE_TRIANGLES
+position_stream: "position"

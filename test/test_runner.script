@@ -24,32 +24,73 @@ local function follow(state, sequence)
 end
 
 local function run_suite()
+  local input = require "game.input_state"
+  local visibility = require "game.visibility"
+  local held = input.new()
+  input.press(held, "w", "up"); input.press(held, "d", "right")
+  equal(input.direction(held), "right", "latest direction wins")
+  input.release(held, "d"); equal(input.direction(held), "up", "held direction resumes")
+  input.clear(held); equal(input.direction(held), nil, "focus reset")
+  local wall={{10,-20,10,20}}
+  equal(visibility.distance(0,0,1,0,wall,30),10,"wall occludes")
+  equal(visibility.distance(0,0,-1,0,wall,30),30,"opposite direction unobstructed")
+  equal(visibility.intensity(300,300),0,"radius boundary dark")
+  equal(visibility.intensity(500,300),0,"beyond radius dark")
+  local poly=visibility.polygon(0,0,{},300,0)
+  equal(#poly,96,"circular coverage")
+  for _,p in ipairs(poly) do truthy(math.abs(p[1]^2+p[2]^2-300^2)<0.01,"equal radius") end
+  local corner={{10,-20,10,10},{10,10,30,10}}
+  local diagonal=math.sqrt(0.5)
+  truthy(math.abs(visibility.distance(0,0,diagonal,diagonal,corner,300)-math.sqrt(200))<0.001,"corner ray hits shared endpoint")
+  local corridors={{80,-500,80,500},{240,-500,240,500}}
+  equal(visibility.distance(0,0,1,0,corridors,300),80,"near wall hides adjacent corridor")
+  local edges=visibility.edges(maze,160)
+  local directions={{-1,0,0,-1},{1,0,0,1},{0,1,-1,0},{0,-1,1,0}}
+  for row=1,maze.height() do for col=1,maze.width() do
+    if maze.is_walkable(row,col) then
+      local x,y=(col-0.5)*160,(maze.height()-row+0.5)*160
+      for _,d in ipairs(directions) do
+        if not maze.is_walkable(row+d[3],col+d[4]) then
+          equal(visibility.distance(x,y,d[1],d[2],edges,300),80,"actual maze wall occludes from cell center")
+        end
+      end
+      for _,o in ipairs({{32,44},{35,35},{-28,29},{-36,32}}) do
+        local points=visibility.polygon(x+o[1],y+o[2],edges,300,12)
+        local valid=true
+        for _,p in ipairs(points) do
+          local distance=(p[1]-x-o[1])^2+(p[2]-y-o[2])^2
+          if distance~=distance or distance>90000.01 then valid=false end
+        end
+        truthy(valid,"all directional torch masks are finite and within radius")
+      end
+    end
+  end end
   local report = maze.validate()
-  equal(report.width, 17, "maze width")
-  equal(report.height, 9, "maze height")
+  equal(report.width, 9, "maze width")
+  equal(report.height, 17, "maze height")
   equal(report.shortest_path, 36, "shortest path")
   truthy(report.shortest_path >= 24, "shortest path must be meaningful")
   truthy(report.dead_ends >= 3, "maze must have at least three dead ends")
 
   local state = game_state.new(maze)
   local initial = game_state.snapshot(state)
-  equal(initial.row, 2, "start row")
+  equal(initial.row, 16, "start row")
   equal(initial.col, 2, "start column")
   equal(initial.status, "playing", "initial status")
 
-  local blocked = game_state.move(state, "up")
+  local blocked = game_state.move(state, "left")
   equal(blocked.kind, "blocked", "wall result")
-  equal(blocked.state.row, 2, "blocked row")
+  equal(blocked.state.row, 16, "blocked row")
   equal(blocked.state.col, 2, "blocked column")
   equal(blocked.state.blocked_count, 1, "blocked counter")
 
-  local moved = game_state.move(state, "right")
+  local moved = game_state.move(state, "up")
   equal(moved.kind, "moved", "valid move result")
-  equal(moved.state.row, 2, "valid move row")
-  equal(moved.state.col, 3, "valid move column")
+  equal(moved.state.row, 15, "valid move row")
+  equal(moved.state.col, 2, "valid move column")
 
   game_state.reset(state)
-  local won = follow(state, "RRRRDDDDRRDDRRRRUUUURRUURRDDDDLLDDRR")
+  local won = follow(state, "UUUURRRRUURRUUUULLLLUULLUURRRRDDRRUU")
   equal(won.kind, "won", "solution result")
   equal(won.state.status, "won", "won status")
   equal(won.state.win_count, 1, "single win event")

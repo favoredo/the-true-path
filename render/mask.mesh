@@ -1,0 +1,4 @@
+material: "/render/mask.material"
+vertices: "/render/mask.buffer"
+primitive_type: PRIMITIVE_TRIANGLES
+position_stream: "position"

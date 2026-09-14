@@ -3,6 +3,7 @@ title = The True Path
 version = 0.1.0
 
 [bootstrap]
+render = /render/game.renderc
 main_collection = /main/main.collectionc
 
 [input]
@@ -10,8 +11,8 @@ game_binding = /input/game.input_bindingc
 repeat_interval = 0.0
 
 [display]
-width = 640
-height = 360
+width = 1280
+height = 720
 high_dpi = 1
 
 [physics]
@@ -23,10 +24,10 @@ use_fixed_timestep = 1
 shared_state = 1
 
 [html5]
-scale_mode = fit
-show_fullscreen_button = 1
+scale_mode = stretch
+show_fullscreen_button = 0
 show_made_with_defold = 0
-heap_size = 64
+heap_size = 128
 wasm_streaming = 1
 cssfile = /web/game.css
 

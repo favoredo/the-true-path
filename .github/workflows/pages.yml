@@ -33,7 +33,10 @@ jobs:
           sudo apt-get install --yes --no-install-recommends libopenal1
       - run: ./scripts/test_headless.sh
       - run: ./scripts/build_html5.sh
+      - run: ./scripts/build_lighting_test.sh
       - run: npx playwright test
+      - name: Exclude diagnostic scene from release
+        run: rm -rf build/html5/lighting
       - name: Upload Pages artifact
         if: github.event_name != 'pull_request'
         uses: actions/upload-pages-artifact@v4

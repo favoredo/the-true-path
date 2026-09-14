@@ -1,0 +1,6 @@
+name: "fire"
+tags: "fire"
+vertex_program: "/render/world.vp"
+fragment_program: "/render/fire.fp"
+vertex_space: VERTEX_SPACE_LOCAL
+vertex_constants { name: "view_proj" type: CONSTANT_TYPE_VIEWPROJ }

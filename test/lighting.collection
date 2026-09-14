@@ -1,0 +1,2 @@
+name: "lighting"
+instances { id: "probe" prototype: "/test/lighting.go" }

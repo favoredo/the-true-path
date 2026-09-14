@@ -1,0 +1,5 @@
+material: "/render/world.material"
+vertices: "/render/decor.buffer"
+primitive_type: PRIMITIVE_TRIANGLES
+position_stream: "position"
+textures: "/assets/graphics/level/terrain-sheet.png"

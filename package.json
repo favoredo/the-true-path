@@ -5,7 +5,8 @@
   "scripts": {
     "build": "./scripts/build_html5.sh",
     "test:headless": "./scripts/test_headless.sh",
-    "test:browser": "playwright test"
+    "test:browser": "playwright test",
+    "build:lighting-test": "./scripts/build_lighting_test.sh"
   },
   "devDependencies": {
     "@playwright/test": "1.63.0"

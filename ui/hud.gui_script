@@ -1,17 +1,105 @@
-local function set_victory(visible)
-  gui.set_enabled(gui.get_node("victory_panel"), visible)
-  gui.set_enabled(gui.get_node("victory_title"), visible)
-  gui.set_enabled(gui.get_node("victory_hint"), visible)
+local ink=vmath.vector4(0.866,0.816,0.686,1)
+local brass=vmath.vector4(0.46,0.36,0.21,1)
+local panel=vmath.vector4(0.07,0.09,0.08,0.96)
+local function node(self,kind,text)
+ local n=kind=='text' and gui.new_text_node(vmath.vector3(),text) or gui.new_box_node(vmath.vector3(),vmath.vector3(1,1,0))
+ gui.set_adjust_mode(n,gui.ADJUST_STRETCH)
+ if kind=='text' then gui.set_font(n,'body');gui.set_color(n,ink) end
+ self.nodes[#self.nodes+1]=n;return n
 end
-
-function init(self)
-  set_victory(false)
+local function rect(self,n,x,y,w,h,color)
+ gui.set_position(n,vmath.vector3(x*1280/self.w,y*720/self.h,0));gui.set_size(n,vmath.vector3(w*1280/self.w,h*720/self.h,0))
+ if color then gui.set_color(n,color) end
 end
-
-function on_message(self, message_id)
-  if message_id == hash("show_playing") then
-    set_victory(false)
-  elseif message_id == hash("show_victory") then
-    set_victory(true)
+local function label(self,n,x,y,size)
+ gui.set_position(n,vmath.vector3(x*1280/self.w,y*720/self.h,0));gui.set_scale(n,vmath.vector3(size/32*1280/self.w,size/32*720/self.h,1))
+end
+local function button(self,id,text)
+ local b={id=id,edge=node(self,'box'),face=node(self,'box'),text=node(self,'text',id=='restart' and 'R' or '')}; if id~='restart' then b.a=node(self,'box');b.b=node(self,'box') end;self.buttons[id]=b;return b
+end
+local function layout(self)
+ local w,h=window.get_size();self.w,self.h=w,h
+ local ratio=1
+ if html5 then
+  local info=json.decode(html5.run("JSON.stringify({w:document.querySelector('canvas').clientWidth,h:document.querySelector('canvas').clientHeight,t:window.__ttpTouch||('ontouchstart' in window)})"))
+  ratio=w/math.max(1,info.w);self.touch=self.touch or info.t or info.w<600
+ end
+ self.ratio=ratio
+ local size=(w/h<1 and 52 or 48)*ratio;local gap=6*ratio;local edge=16*ratio
+ local cx=edge+size*1.5+gap;local cy=edge+size*1.5+gap
+ local positions={up={cx,cy+size+gap},down={cx,cy-size-gap},left={cx-size-gap,cy},right={cx+size+gap,cy},restart={w-edge-size/2,edge+size/2}}
+ for id,b in pairs(self.buttons) do
+  b.x,b.y=positions[id][1],positions[id][2];b.size=size;b.enabled=id=='restart' or self.touch
+  rect(self,b.edge,b.x,b.y,size,size,brass);rect(self,b.face,b.x,b.y,size-3*ratio,size-3*ratio,panel);label(self,b.text,b.x,b.y,23*ratio)
+  if b.a then
+   local dir=({up=0,right=-90,down=180,left=90})[id]
+   local rad=math.rad(dir);local dx,dy=6*ratio*math.cos(rad),6*ratio*math.sin(rad)
+   rect(self,b.a,b.x-dx,b.y-dy,17*ratio,3*ratio,ink);rect(self,b.b,b.x+dx,b.y+dy,17*ratio,3*ratio,ink)
+   gui.set_euler(b.a,vmath.vector3(0,0,45+dir));gui.set_euler(b.b,vmath.vector3(0,0,-45+dir))
+   gui.set_enabled(b.a,b.enabled);gui.set_enabled(b.b,b.enabled)
   end
+  gui.set_enabled(b.edge,b.enabled);gui.set_enabled(b.face,b.enabled);gui.set_enabled(b.text,b.enabled)
+ end
+ label(self,self.title,w/2,h-32*ratio,19*ratio);rect(self,self.rule,w/2,h-50*ratio,200*ratio,ratio,brass)
+ label(self,self.hint,w/2,25*ratio,12*ratio);gui.set_enabled(self.hint,not self.touch)
+ rect(self,self.vpanel,w/2,h/2,math.min(w-32*ratio,340*ratio),150*ratio,panel)
+ label(self,self.vtitle,w/2,h/2+24*ratio,25*ratio);label(self,self.vhint,w/2,h/2-18*ratio,14*ratio)
 end
+local function release(self,source)
+ if self.held[source] then msg.post('/game#script','direction_release',{source=source});self.held[source]=nil end
+end
+local function clear(self)
+ for source in pairs(self.held) do release(self,source) end
+end
+local function victory(self,visible)
+ for _,n in ipairs({self.vpanel,self.vtitle,self.vhint}) do gui.set_enabled(n,visible) end
+ self.won=visible
+end
+function init(self)
+ self.nodes={};self.buttons={};self.held={};self.touch=false
+ self.title=node(self,'text','THE TRUE PATH');gui.set_font(self.title,'heading');self.rule=node(self,'box');self.hint=node(self,'text','WASD / ARROWS   ·   R RESTART')
+ for id,text in pairs({up='▲',down='▼',left='◀',right='▶',restart='↻'}) do button(self,id,text) end
+ self.vpanel=node(self,'box');self.vtitle=node(self,'text','PATH FOUND');self.vhint=node(self,'text','RESTART TO WALK AGAIN')
+ layout(self);victory(self,false);msg.post('.','acquire_input_focus')
+end
+function update(self)
+ local w,h=window.get_size()
+ local touch=html5 and html5.run('String(!!window.__ttpTouch)')=='true'
+ if w~=self.w or h~=self.h or touch and not self.touch then clear(self);self.touch=self.touch or touch;layout(self) end
+ for id,b in pairs(self.buttons) do
+  local active=false;for _,d in pairs(self.held) do if d==id then active=true end end
+  gui.set_color(b.face,active and vmath.vector4(0.23,0.23,0.16,1) or panel)
+ end
+end
+local function pointer(self,source,a,is_touch)
+ if a.released then release(self,source);return end
+ if not a.pressed and not self.held[source] then return end
+ local picked
+ for id,b in pairs(self.buttons) do if b.enabled and gui.pick_node(b.face,a.x,a.y) then picked=id;break end end
+ if picked=='restart' then
+  if a.pressed then clear(self);msg.post('/game#script','restart_request') end
+  release(self,source);return
+ end
+ if picked~=self.held[source] then
+  release(self,source)
+  if picked and not self.won then self.held[source]=picked;msg.post('/game#script','direction_press',{source=source,direction=picked}) end
+ end
+end
+function on_input(self,id,a)
+ if id==hash('multitouch') then
+  if not self.touch then self.touch=true;layout(self) end
+  self.last_touch=socket.gettime()
+  for _,t in ipairs(a.touch or {}) do pointer(self,'touch'..t.id,t,true) end
+  return true
+ elseif id==hash('pointer') then
+  if self.last_touch and socket.gettime()-self.last_touch<0.8 then return true end
+  pointer(self,'mouse',a,false);return true
+ elseif id==nil and self.held.mouse then pointer(self,'mouse',a,false) end
+ return false
+end
+function on_message(self,id)
+ if id==hash('show_playing') then victory(self,false)
+ elseif id==hash('show_victory') then clear(self);victory(self,true)
+ elseif id==hash('clear_input') then clear(self) end
+end
+function final(self) msg.post('.','release_input_focus') end

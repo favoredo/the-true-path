@@ -1,0 +1,43 @@
+local function target(w,h)
+ return render.render_target({[graphics.BUFFER_TYPE_COLOR0_BIT]={format=graphics.TEXTURE_FORMAT_RGBA,width=w,height=h,min_filter=graphics.TEXTURE_FILTER_LINEAR,mag_filter=graphics.TEXTURE_FILTER_LINEAR,u_wrap=graphics.TEXTURE_WRAP_CLAMP_TO_EDGE,v_wrap=graphics.TEXTURE_WRAP_CLAMP_TO_EDGE},[graphics.BUFFER_TYPE_DEPTH_BIT]={format=graphics.TEXTURE_FORMAT_DEPTH,width=w,height=h}})
+end
+function init(self)
+ self.world=render.predicate({'world'});self.mask=render.predicate({'visibility'});self.post=render.predicate({'composite'});self.fire=render.predicate({'fire'})
+ self.gui=render.predicate({'gui'});self.text=render.predicate({'text'})
+ self.camera=vmath.vector3(240,240,0);self.light=vmath.vector4(272,284,300,1)
+ self.constants=render.constant_buffer()
+end
+function update(self)
+ local w,h=render.get_window_width(),render.get_window_height()
+ if w==0 or h==0 then return end
+ local scale=math.min(1,1920/math.max(w,h));local rw,rh=math.floor(w*scale),math.floor(h*scale)
+ if rw~=self.w or rh~=self.h then
+  if self.scene then render.delete_render_target(self.scene);render.delete_render_target(self.visibility) end
+  self.scene=target(rw,rh);self.visibility=target(rw,rh);self.w,self.h=rw,rh
+ end
+ local vw,vh=720*w/math.min(w,h),720*h/math.min(w,h)
+ local view=vmath.matrix4_translation(-self.camera)
+ local projection=vmath.matrix4_orthographic(-vw/2,vw/2,-vh/2,vh/2,-10,10)
+ render.disable_state(graphics.STATE_DEPTH_TEST);render.disable_state(graphics.STATE_CULL_FACE)
+ render.set_render_target(self.scene);render.set_viewport(0,0,rw,rh)
+ render.clear({[graphics.BUFFER_TYPE_COLOR0_BIT]=vmath.vector4(0,0,0,1),[graphics.BUFFER_TYPE_DEPTH_BIT]=1})
+ render.enable_state(graphics.STATE_DEPTH_TEST);render.set_depth_func(graphics.COMPARE_FUNC_LEQUAL)
+ render.set_view(view);render.set_projection(projection)
+ render.enable_state(graphics.STATE_BLEND);render.set_blend_func(graphics.BLEND_FACTOR_ONE,graphics.BLEND_FACTOR_ONE_MINUS_SRC_ALPHA)
+ render.draw(self.world);render.draw(self.fire)
+ render.disable_state(graphics.STATE_DEPTH_TEST)
+ render.set_render_target(self.visibility)
+ render.clear({[graphics.BUFFER_TYPE_COLOR0_BIT]=vmath.vector4(0,0,0,1)})
+ render.disable_state(graphics.STATE_BLEND);render.draw(self.mask)
+ render.set_render_target(render.RENDER_TARGET_DEFAULT);render.set_viewport(0,0,w,h)
+ render.set_view(vmath.matrix4());render.set_projection(vmath.matrix4_orthographic(-1,1,-1,1,-1,1))
+ render.enable_texture(0,self.scene,graphics.BUFFER_TYPE_COLOR0_BIT);render.enable_texture(1,self.visibility,graphics.BUFFER_TYPE_COLOR0_BIT)
+ self.constants.light=self.light;self.constants.camera_info=vmath.vector4(self.camera.x,self.camera.y,0,0);self.constants.view_size=vmath.vector4(vw,vh,0,0)
+ render.draw(self.post,{constants=self.constants});render.disable_texture(0);render.disable_texture(1)
+ render.set_projection(vmath.matrix4_orthographic(0,w,0,h,-1,1));render.enable_state(graphics.STATE_BLEND)
+ render.draw(self.gui);render.draw(self.text)
+ if html5 then html5.run('window.__TTP_RENDER__=Object.freeze('..json.encode({camera_x=self.camera.x,camera_y=self.camera.y,width=w,height=h,view_width=vw,view_height=vh,target_width=rw,target_height=rh,target_count=2})..');') end
+end
+function on_message(self,id,m)
+ if id==hash('scene_view') then self.camera=m.camera;self.light=m.light end
+end

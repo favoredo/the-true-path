@@ -1,0 +1,12 @@
+local geometry=require 'game.geometry'
+local visibility=require 'game.visibility'
+function init(self)
+ local wall=html5 and html5.run("new URLSearchParams(location.search).get('wall')||''")=='1'
+ local v={};geometry.quad(v,0,0,2000,2000,-2,1,1,1);geometry.upload('/render/terrain.bufferc',v)
+ v={};geometry.quad(v,0,0,2,2,0,1,1,1);for _,p in ipairs(v) do p[4]=(p[1]+1)/2;p[5]=(p[2]+1)/2 end;geometry.upload('/render/post.bufferc',v)
+ local points=visibility.polygon(0,0,wall and {{100,-600,100,600}} or {},300,12)
+ v={};for i,p in ipairs(points) do local q=points[i%#points+1];v[#v+1]={0,0,0};v[#v+1]={p[1],p[2],0};v[#v+1]={q[1],q[2],0} end
+ geometry.upload('/render/mask.bufferc',v)
+ msg.post('@render:','scene_view',{camera=vmath.vector3(),light=vmath.vector4(0,0,300,1)})
+ if html5 then html5.run('window.__TTP_LIGHT_READY__=true') end
+end
